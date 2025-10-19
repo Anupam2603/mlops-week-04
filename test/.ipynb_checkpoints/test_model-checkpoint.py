@@ -19,5 +19,5 @@ def test_model_accuaracy():
     y_test_prediciton = model.predict(X_test)
 
     with open("output.txt", 'w') as f:       
-        assert metrics.accuracy_score(y_test, y_test_prediciton) < 1.0, "Model accuracy is less than 1 implies the model has not been overfitted."
+        assert metrics.accuracy_score(y_test, y_test_prediciton) < 1.0, "Model accuracy is 1 implies the model has been overfitted."
         
