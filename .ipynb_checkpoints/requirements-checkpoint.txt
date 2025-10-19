@@ -1,0 +1,5 @@
+pandas
+joblib
+dvc
+scikit-learn
+dvc[gs]
