@@ -1,1 +1,0 @@
-The accuracy score on training data, trained on V2 versioin of dataset, is 1.0

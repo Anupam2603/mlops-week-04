@@ -3,3 +3,4 @@ joblib
 dvc
 scikit-learn
 dvc[gs]
+pytest
