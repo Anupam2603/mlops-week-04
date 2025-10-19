@@ -31,13 +31,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
-      # Step 4: IMPORTANT - Use DVC to pull your data and model files
-      - name: Pull DVC Data and Models
-        uses: iterative/dvc-action@v2
+      
+      # Step 4: NEW - Authenticate DVC with Google Cloud Platform (GCP)
+      # This step securely provides the GCP key from a GitHub Secret
+      - name: Authenticate GCP
+        uses: 'google-github-actions/auth@v2'
         with:
-          run: dvc pull
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
 
-      # Step 5: Run your tests!
+      # Step 5: IMPORTANT - Use DVC to pull your data and model files
+      # This will now succeed because the previous step logged us into GCP
+      - name: Pull DVC Data and Models
+        run: dvc pull
+
+      # Step 6: Run your tests!
       - name: Run Pytest
         run: pytest
