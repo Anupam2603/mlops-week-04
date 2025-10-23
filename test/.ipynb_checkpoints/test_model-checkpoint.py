@@ -1,3 +1,4 @@
+import os
 import sys
 import pandas as pd
 import numpy as np
@@ -7,9 +8,18 @@ import pytest
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn import metrics
 
+import mlflow
+import mlflow.pyfunc
+
+TRACKING_SERVER_URI = os.environ.get("MLFLOW_TRACKING_URI", "http://127.0.0.1:8100")
+mlflow.set_tracking_uri(TRACKING_SERVER_URI)
+print(f"MLflow tracking URI set to: {TRACKING_SERVER_URI}")
+REGISTERED_MODEL_NAME = "iris-classifier-dt"
+MODEL_STAGE = "latest" 
+
 def test_model_accuaracy():
-    with open("models/model.joblib", 'rb') as f:
-        model = joblib.load(f)
+    model_uri = f"models:/{REGISTERED_MODEL_NAME}/{MODEL_STAGE}"
+    model = mlflow.pyfunc.load_model(model_uri)
 
 
     test = pd.read_csv(f"test/data.csv")
@@ -17,7 +27,5 @@ def test_model_accuaracy():
     y_test = test.species
 
     y_test_prediciton = model.predict(X_test)
-
-    with open("output.txt", 'w') as f:       
-        assert metrics.accuracy_score(y_test, y_test_prediciton) < 1.0, "Model accuracy is less than 1 implies the model has not been overfitted."
+    assert metrics.accuracy_score(y_test, y_test_prediciton) >= 0.8, "Model accuracy is less than 0.8 implies the model has been underfitted."
         
