@@ -27,7 +27,4 @@ def test_model_accuaracy():
     y_test = test.species
 
     y_test_prediciton = model.predict(X_test)
-<<<<<<< HEAD
     assert metrics.accuracy_score(y_test, y_test_prediciton) >= 0.8, "Model accuracy is less than 0.8 implies the model has been underfitted."
-=======
-
