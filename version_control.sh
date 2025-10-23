@@ -19,4 +19,4 @@ git tag a "$1" -m "Trained with version $1 dataset"
 dvc push
 
 #Pushing the changes to remote direcotry on Github
-git push -u origin master
+git push -u origin ${2}
