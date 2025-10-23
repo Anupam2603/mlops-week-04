@@ -38,12 +38,11 @@ jobs:
         uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
-
-      # Step 5: IMPORTANT - Use DVC to pull your data and model files
-      # This will now succeed because the previous step logged us into GCP
-      - name: Pull DVC Data and Models
-        run: dvc pull
-
-      # Step 6: Run your tests!
+    
+      # Step 5: Running unittest for sanity check      
       - name: Run Pytest
+        env:
+          # This secret must be created in your GitHub repo's settings
+          # It should be the public IP of your VM: e.g., http://34.135.18.72:8100
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
         run: pytest

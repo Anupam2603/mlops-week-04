@@ -1,0 +1,70 @@
+# This is the name of your automation workflow
+name: CI/CD Pipeline with CML Report
+
+# This section defines WHEN the workflow should run
+on:
+  # Run it when you push code to ANY branch
+  push:
+    branches: [ '**' ]
+  # Also run it when you open a Pull Request that targets ANY branch
+  pull_request:
+    branches: [ '**' ]
+
+- name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          # FIX: Corrected the CML package name
+          pip install cml# This section defines WHAT the workflow should DO
+jobs:
+  build-and-test:
+    # Use a standard virtual machine provided by GitHub
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Check out your repository code so the machine can see it
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up the Python programming language
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      # Step 3: Install all the libraries your project needs (from requirements.txt)
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      # Step 4: Authenticate DVC with Google Cloud Platform (GCP)
+      # This step securely provides the GCP key from a GitHub Secret
+      - name: Authenticate GCP
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+      # Step 5: Use DVC to pull your data and model files
+      # This will now succeed because the previous step logged us into GCP
+      - name: Pull DVC Data and Models
+        run: dvc pull
+
+      # Step 6: Run your tests!
+      - name: Run Pytest
+        run: pytest
+
+      # Step 7: NEW - Create a CML report from test output
+      # This takes the accuracy from output.txt and formats it for the PR comment
+      - name: Create CML Report
+        run: |
+          echo "## Model Sanity Check Report" > report.md
+          echo "The following is the accuracy from the test run:" >> report.md
+          cat output.txt >> report.md
+
+      # Step 8: NEW - Post the CML report as a comment on the Pull Request
+      - name: Post CML Comment
+        env:
+          # This is a special token GitHub provides to allow CML to comment
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cml comment create report.md
