@@ -39,7 +39,7 @@ class IrisFeatures(BaseModel):
 # Define the root endpoint
 @app.get("/")
 def read_root():
-    return {"message": f"Welcome! The '{REGISTERED_MODEL_NAME}
+    return {"message": f"Welcome! The '{REGISTERED_MODEL_NAME}"}
 
 # Define the prediction endpoint
 @app.post("/predict")

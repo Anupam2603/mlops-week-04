@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # The name of your deployment
+  name: iris-api-deployment
+spec:
+    replicas: 3
+    selector:
+        matchLabels:
+          app: iris-api
+    template:
+        metadata:
+          labels:
+            # We give the Pod the label "app: iris-api" so the
+            # Deployment's 'selector' can find it.
+            app: iris-api
+        spec:
+          # This 'spec' defines the containers that go *inside* the Pod.
+          containers:
+          - name: iris-api-container
+            image: "us-central1-docker.pkg.dev/stunning-agency-472702-a0/iris-api-repo/iris-api:latest"
+            ports:
+            - containerPort: 5050
