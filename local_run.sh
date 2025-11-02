@@ -13,5 +13,5 @@ fi
 gsutil cp "gs://mlops-week-04-graded-assignment/${1}/data.csv" ./data
 
 #Executing the code.
-python train.py
+python train.py --max_depth ${2} --criterion ${3} --exp_name ${4}
 
