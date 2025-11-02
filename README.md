@@ -26,3 +26,4 @@
 - `version_control.sh`: Bash script for version control.
 - `requirements.txt`: Contains the information of necessary libraries to perform given task.
 - `README.md`: Contains the information of project with all the infromation to run the code and folder and file structure..
+ 
