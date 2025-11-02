@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  # The name of our service
+  name: iris-api-service
+spec:
+  # This is the most important part.
+  # "LoadBalancer" tells GCP to create an actual,
+  # public-facing IP address for this service.
+  type: LoadBalancer
+
+  # This 'selector' tells the Service which Pods to
+  # send traffic to. It must *exactly match* the
+  # labels you put on your Pods in 'deployment.yml'.
+  selector:
+    app: iris-api
+
+  ports:
+    # This section defines the port mapping.
+  - protocol: TCP
+    # The 'port' is the *external* port on the Load Balancer.
+    # The internet will access your API at http://[PUBLIC_IP]:80
+    port: 80
+    # The 'targetPort' is the port your *container* is
+    # listening on. This must match 'containerPort' in
+    # 'deployment.yml' and the CMD in your 'Dockerfile'.
+    targetPort: 5050

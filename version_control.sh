@@ -3,8 +3,8 @@
 echo "Controlling the version of data and model"
 
 
-# Adding data and model to version control file
-dvc add data ./models/model.joblib
+# Adding data to version control file
+dvc add data
 
 #Adding all the changes to git
 git add .

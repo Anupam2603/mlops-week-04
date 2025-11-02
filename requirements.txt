@@ -5,3 +5,6 @@ scikit-learn
 dvc[gs]
 pytest
 mlflow
+fastapi
+pydantic
+uvicorn
