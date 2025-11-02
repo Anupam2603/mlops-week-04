@@ -6,7 +6,7 @@ metadata:
 spec:
   # 'replicas: 3' means Kubernetes will always try to keep
   # 3 copies (Pods) of your API running.
-  replicas: 3
+  replicas: 1
   selector:
     # This 'selector' tells the Deployment which Pods to manage.
     # It looks for Pods with the label "app: iris-api".
@@ -42,7 +42,13 @@ spec:
         - name: MLFLOW_TRACKING_URI
           value: "MLFLOW_URI_PLACEHOLDER"
         # -------------------------------------
-
+        resources:
+          requests:
+            memory: "256Mi" # 256 Megabytes of RAM
+            cpu: "250m"    # 0.25 of a vCPU
+          limits:
+            memory: "512Mi" # 512 Megabytes of RAM
+            cpu: "500m"    # 0.5 of a vCPU
         # --- Health Checks ---
         # Kubernetes will use these "probes" to see if
         # your API is healthy and ready to receive traffic.
