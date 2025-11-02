@@ -7,7 +7,7 @@ from pydantic import BaseModel
 # Set the MLflow tracking URI.
 # This will use the environment variable 'MLFLOW_TRACKING_URI' if it's set.
 # If not, it defaults to your local VM's server.
-TRACKING_SERVER_URI = os.environ.get("MLFLOW_TRACKING_URI", "http://127.0.0.1:8100")
+TRACKING_SERVER_URI = "http://34.30.164.194:8100/"
 mlflow.set_tracking_uri(TRACKING_SERVER_URI)
 
 # Define the model we want to load from the registry
