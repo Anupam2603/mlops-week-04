@@ -4,20 +4,63 @@ metadata:
   # The name of your deployment
   name: iris-api-deployment
 spec:
-    replicas: 3
-    selector:
-        matchLabels:
-          app: iris-api
-    template:
-        metadata:
-          labels:
-            # We give the Pod the label "app: iris-api" so the
-            # Deployment's 'selector' can find it.
-            app: iris-api
-        spec:
-          # This 'spec' defines the containers that go *inside* the Pod.
-          containers:
-          - name: iris-api-container
-            image: "us-central1-docker.pkg.dev/stunning-agency-472702-a0/iris-api-repo/iris-api:latest"
-            ports:
-            - containerPort: 5050
+  # 'replicas: 3' means Kubernetes will always try to keep
+  # 3 copies (Pods) of your API running.
+  replicas: 1
+  selector:
+    # This 'selector' tells the Deployment which Pods to manage.
+    # It looks for Pods with the label "app: iris-api".
+    matchLabels:
+      app: iris-api
+  
+  # This 'template' is the "blueprint" for the Pods.
+  template:
+    metadata:
+      # This 'label' is applied to each Pod, so the 'selector'
+      # above can find it.
+      labels:
+        app: iris-api
+    spec:
+      containers:
+      - name: iris-api-container
+        # --- IMPORTANT ---
+        # This 'image:' path is a placeholder.
+        # The CI/CD pipeline will *replace this line*
+        # with the real image path from the Artifact Registry.
+        image: gcr.io/your-project/iris-api:latest
+
+        ports:
+          # The port *inside* the container that your
+          # 'uvicorn' server is running on.
+        - containerPort: 8080
+
+        # --- NEW SECTION TO FIX THE CRASH ---
+        # We must pass the public MLflow server URI to our
+        # 'api.py' script so it can find the model.
+        # The 'ci-cd.yml' file will replace the placeholder.
+        env:
+        - name: MLFLOW_TRACKING_URI
+          value: "MLFLOW_URI_PLACEHOLDER"
+        # -------------------------------------
+        resources:
+          requests:
+            memory: "256Mi" # 256 Megabytes of RAM
+            cpu: "250m"    # 0.25 of a vCPU
+          limits:
+            memory: "512Mi" # 512 Megabytes of RAM
+            cpu: "500m"    # 0.5 of a vCPU
+        # --- Health Checks ---
+        # Kubernetes will use these "probes" to see if
+        # your API is healthy and ready to receive traffic.
+        livenessProbe:
+          httpGet:
+            path: / # The "homepage" of your API
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
