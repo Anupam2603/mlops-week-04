@@ -1,7 +1,7 @@
 # Step 1: Start from an official Python base image.
 # We use "slim" because it's a smaller, more production-ready image
 # than the full Python image, which saves space.
-FROM python:3.9-slim
+FROM python:3.10-slim
 
 # Step 2: Set a working directory inside the container.
 # This is where our app's code will live. All future commands
