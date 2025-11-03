@@ -26,9 +26,9 @@ COPY api.py .
 
 # Step 6: Expose the port the API will run on.
 # This tells Docker that the container will listen on port 8080.
-EXPOSE 5050
+EXPOSE 8080
 
 # Step 7: Define the command to run when the container starts.
 # This is the "main" command for the container. It runs your
 # FastAPI app using the uvicorn server..
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "5050"]
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8080"]
