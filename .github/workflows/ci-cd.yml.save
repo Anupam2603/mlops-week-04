@@ -1,0 +1,14 @@
+name: CI-CD Pipeline for Iris API
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+env:
+  GCP_PROJECT_ID: "YOUR_PROJECT_ID"            # Your GCP Project ID
+  GKE_CLUSTER_NAME: "iris-api-cluster"        # The name you gave your GKE cluster
+  GKE_REGION: "us-central1"                   # The region for your cluster and registry
+  ARTIFACT_REGISTRY: "iris-api-repo"          # The name of your Artifact Registry repo
+  DEPLOYMENT_NAME: "iris-api-deployment"      # The 'name' from k8s/deployment.yml
+  IMAGE_NAME: "iris-api"                      # The name for your Docker image
+stunning-agency-472702-a0

@@ -1,0 +1,29 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  # The name of our HPA
+  name: iris-api-hpa
+spec:
+  # This tells the HPA *what* to scale.
+  # It targets our 'iris-api-deployment'
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: iris-api-deployment
+  
+  # This sets the rule from your assignment:
+  # "default pod availability of 1"
+  minReplicas: 1
+  # "with max_pods: 3"
+  maxReplicas: 3
+
+  # This is the "thermostat" trigger:
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        # We will scale up if the average CPU
+        # usage across all Pods goes above 50%
+        type: Utilization
+        averageUtilization: 50

@@ -5,16 +5,16 @@
 echo "Creating the virtual enviroment and installing all dependencies."
 
 #Creating virtual environmnet.
-if [ -d ".Week_04" ]
+if [ -d ".mlops" ]
 then
-	echo ".Week_04 library exists.Activating virtual environment and intalling dependencies using pip"
+	echo ".mlops library exists.Activating virtual environment and intalling dependencies using pip"
 else
-	echo "Creating .Week_04 directory"
-	python3 -m venv .Week_04
+	echo "Creating .mlops directory"
+	python3 -m venv .mlops
 fi 
 
 # Activate virtual environment
-source .Week_04/bin/activate
+source .mlops/bin/activate
 
 # upgrade the pip
 pip install --upgrade pip
