@@ -177,4 +177,4 @@ jobs:
       - name: Run wrk stress test (1000 connections)
         run: |
           echo "Running stress test on http://${{ steps.get_ip.outputs.SERVICE_IP }}/"
-          wrk -t4 -c1000 -d30s http://${{ steps.get_ip.outputs.SERVICE_IP }}/
+          wrk -t4 -c1000 -d60s http://${{ steps.get_ip.outputs.SERVICE_IP }}/
