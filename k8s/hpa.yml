@@ -15,7 +15,7 @@ spec:
   # "default pod availability of 1"
   minReplicas: 1
   # "with max_pods: 3"
-  maxReplicas: 1
+  maxReplicas: 3
 
   # This is the "thermostat" trigger:
   metrics:
