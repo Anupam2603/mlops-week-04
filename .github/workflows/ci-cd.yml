@@ -2,9 +2,9 @@ name: CI-CD Pipeline for Iris API
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches: [ "main", "dev", "master" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "dev", "master" ]
   workflow_dispatch: # Allows manual running
 
 # 2. Global ENVIRONMENT Variables (PLACEHOLDERS)
@@ -177,4 +177,4 @@ jobs:
       - name: Run wrk stress test (1000 connections)
         run: |
           echo "Running stress test on http://${{ steps.get_ip.outputs.SERVICE_IP }}/"
-          wrk -t4 -c1000 -d30s http://${{ steps.get_ip.outputs.SERVICE_IP }}/
+          wrk -t4 -c1000 -d90s http://${{ steps.get_ip.outputs.SERVICE_IP }}/
