@@ -1,12 +1,12 @@
 name: CI-CD Pipeline for Iris API
 on:
   push:
-    branches: [ main, dev ]
+    branches: [ master, dev ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 env:
   GCP_PROJECT_ID: "stunning-agency-472702-a0" 
-  GKE_CLUSTER_NAME: "week-06-cluster"        
+  GKE_CLUSTER_NAME: "autopilot-cluster-1"        
   GKE_REGION: "us-central1"                  
   ARTIFACT_REGISTRY: "iris-api-repo"         
   DEPLOYMENT_NAME: "iris-api-deployment"     
@@ -102,3 +102,53 @@ jobs:
         # 2. Apply both instruction manuals
         kubectl apply -f k8s/deployment.yml
         kubectl apply -f k8s/service.yml
+
+  # --- JOB 3: STRESS TEST ---
+  stress-test:
+    name: Run Stress Test with wrk
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Authenticate to GCP
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_CD_SERVICE_ACCOUNT_KEY }}'
+
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: Install GKE Auth Plugin
+        run: gcloud components install gke-gcloud-auth-plugin
+
+      - name: Get GKE Credentials
+        run: |
+          gcloud container clusters get-credentials ${{ env.GKE_CLUSTER_NAME }} --region ${{ env.GKE_REGION }}
+      
+      - name: Install wrk
+        run: sudo apt-get update && sudo apt-get install -y wrk
+
+      - name: Get API Public IP
+        id: get_ip
+        run: |
+          echo "Waiting for Load Balancer IP..."
+          for i in {1..12}; do
+            IP=$(kubectl get service iris-api-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+            if [ -n "$IP" ]; then
+              echo "IP found: $IP"
+              echo "SERVICE_IP=$IP" >> $GITHUB_OUTPUT
+              break
+            fi
+            sleep 10
+          done
+          if [ -z "$IP" ]; then
+            echo "Load Balancer IP not found."
+            exit 1
+          fi
+
+      - name: Run wrk stress test (1000 connections)
+        run: |
+          # Run the test for 90 seconds to allow time for autoscaling
+          wrk -t4 -c1000 -d90s -s post_body.lua http://${{ steps.get_ip.outputs.SERVICE_IP }}/predict
