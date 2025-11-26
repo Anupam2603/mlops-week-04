@@ -147,6 +147,14 @@ jobs:
             echo "Load Balancer IP not found."
             exit 1
           fi
+        # --- NEW STEP: Create the Lua script dynamically ---
+      - name: Create wrk script
+        run: |
+          cat <<EOF > post_body.lua
+          wrk.body = '{"sepal_length": 5.1, "sepal_width": 3.5, "petal_length": 1.4, "petal_width": 0.2}'
+          wrk.headers["Content-Type"] = "application/json"
+          wrk.method = "POST"
+          EOF
 
       - name: Run wrk stress test (1000 connections)
         run: |
