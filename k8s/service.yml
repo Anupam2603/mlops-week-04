@@ -24,4 +24,4 @@ spec:
     # The 'targetPort' is the port your *container* is
     # listening on. This must match 'containerPort' in
     # 'deployment.yml' and the CMD in your 'Dockerfile'.
-    targetPort: 5050
+    targetPort: 8080
