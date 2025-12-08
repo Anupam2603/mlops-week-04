@@ -1,117 +1,61 @@
 name: CI-CD Pipeline for Iris API
+
 on:
   push:
-    branches: [ master, dev ]
+    branches: [ "main", "dev" ]
   pull_request:
-    branches: [ master ]
+    branches: [ "main" ]
+  workflow_dispatch:
+
+# --- UPDATE THESE VARIABLES WITH YOUR PROJECT DETAILS ---
 env:
-  GCP_PROJECT_ID: "stunning-agency-472702-a0" 
-  GKE_CLUSTER_NAME: "autopilot-cluster-1"        
-  GKE_REGION: "us-central1"                  
-  ARTIFACT_REGISTRY: "iris-api-repo"         
-  DEPLOYMENT_NAME: "iris-api-deployment"     
-  IMAGE_NAME: "iris-api" 
+  GCP_PROJECT_ID: stunning-agency-472702-a0 
+  GKE_CLUSTER_NAME: autopilot-cluster-1 
+  GKE_REGION: us-central1                  
+  ARTIFACT_REGISTRY: iris-api-repo         
+  IMAGE_NAME: iris-api
+# ------------------------------------------------------
+
 jobs:
-  # --- JOB 1: Continuous Integration (Testing) ---
+  # --- JOB 1: Continuous Integration (CI) ---
+  # This job runs pytest to make sure our code is good.
   test:
-    name: Run Unit Tests
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repository code
-      uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-
-    - name: Install Python Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-
-    - name: Run Pytest
-      env:
-        # Provide the *public* IP of your VM as a secret
-        MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
-      run: pytest
-# --- JOB 2: Continuous Deployment (Build & Deploy) ---
-  build-and-deploy:
-    name: Build and Deploy to GKE
-    # This job only runs IF the 'test' job succeeds
-    needs: test
-    runs-on: ubuntu-latest
-    
-    # This job needs permissions to write to Artifact Registry
-    # and talk to GKE.
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-
-    steps:
-    - name: Checkout repository code
-      uses: actions/checkout@v3
-
-    # --- Authenticate with GCP ---
-    - name: Authenticate to Google Cloud
-      id: auth
-      uses: 'google-github-actions/auth@v2'
-      with:
-        # Use the JSON key you downloaded for your service account
-        credentials_json: '${{ secrets.GCP_CD_SERVICE_ACCOUNT_KEY }}'
-        
-    - name: Set up Cloud SDK
-      uses: 'google-github-actions/setup-gcloud@v2'
-   
-    # Install the gke-gcloud-auth-plugin.
-    # This is required for kubectl to authenticate with GKE.
-    - name: Install gke-gcloud-auth-plugin
-      run: gcloud components install gke-gcloud-auth-plugin
-    # --- Build and Push Docker Image ---
-    - name: Configure Docker
-      run: gcloud auth configure-docker ${{ env.GKE_REGION }}-docker.pkg.dev
-
-    - name: Build Docker Image
-      run: docker build -t ${{ env.IMAGE_NAME }}:latest .
-
-    - name: Tag Docker Image
-      run: |
-        docker tag ${{ env.IMAGE_NAME }}:latest \
-        ${{ env.GKE_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-
-    - name: Push Docker Image to Artifact Registry
-      run: |
-        docker push \
-        ${{ env.GKE_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-# --- Deploy to Kubernetes (GKE) ---
-    - name: Get GKE Cluster Credentials
-      # This configures 'kubectl' (the Kubernetes command line tool)
-      # to talk to your GKE cluster
-      run: |
-        gcloud container clusters get-credentials ${{ env.GKE_CLUSTER_NAME }} \
-        --region ${{ env.GKE_REGION }}
-
-    - name: Deploy to GKE
-      # This is the "magic" step. It applies your "instruction manuals"
-      # to the cluster. Kubernetes will see the new image path
-      # and automatically start a "rolling update" to your new version.
-      run: |
-        # 1. Update the deployment.yml with the *exact* new image path
-        sed -i 's|image: .*|image: ${{ env.GKE_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/${{ env.IMAGE_NAME }}:latest|' k8s/deployment.yml
-        
-        # 2. Apply both instruction manuals
-        kubectl apply -f k8s/deployment.yml
-        kubectl apply -f k8s/service.yml
-
-  # --- JOB 3: STRESS TEST ---
-  stress-test:
-    name: Run Stress Test with wrk
-    needs: build-and-deploy
+    name: Run Pytest
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run Pytest
+        env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+        run: pytest
+
+  # --- JOB 2: Continuous Deployment (CD) ---
+  # This job only runs if the 'test' job succeeds.
+  build-and-deploy:
+    name: Build and Deploy to GKE
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 1. Authenticate to Google Cloud
       - name: Authenticate to GCP
         uses: 'google-github-actions/auth@v2'
         with:
@@ -120,16 +64,71 @@ jobs:
       - name: Set up Cloud SDK
         uses: 'google-github-actions/setup-gcloud@v2'
 
-      - name: Install GKE Auth Plugin
+      # 2. Install GKE Auth Plugin (Fixes kubectl authentication)
+      - name: Install gke-gcloud-auth-plugin
         run: gcloud components install gke-gcloud-auth-plugin
 
+      # 3. Configure Docker to use gcloud as a credential helper
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.GKE_REGION }}-docker.pkg.dev
+
+      # 4. Build and Push the Docker Image
+      - name: Build and Push Docker Image
+        run: |
+          docker build --tag ${{ env.GKE_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
+          docker push ${{ env.GKE_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      # 5. Connect to GKE Cluster
+      - name: Get GKE Credentials
+        run: |
+          gcloud container clusters get-credentials ${{ env.GKE_CLUSTER_NAME }} --region ${{ env.GKE_REGION }}
+
+      # 6. Deploy to GKE
+      - name: Deploy to GKE
+        run: |
+          # A. Update deployment.yml with the exact image path
+          sed -i 's|image: .*|image: ${{ env.GKE_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/${{ env.IMAGE_NAME }}:latest|' k8s/deployment.yml
+          
+          # B. Inject the MLflow URI secret into the deployment manifest
+          sed -i 's|MLFLOW_URI_PLACEHOLDER|${{ secrets.MLFLOW_TRACKING_URI }}|' k8s/deployment.yml
+          
+          # C. Apply all instruction manuals to the cluster
+          kubectl apply -f k8s/deployment.yml
+          kubectl apply -f k8s/service.yml
+          kubectl apply -f k8s/hpa.yml
+
+  # --- JOB 3: Stress Test (CD) ---
+  # This job runs *after* deployment to stress test the API using wrk
+  stress-test:
+    name: Run Stress Test with wrk
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 1. Authenticate to GCP (Needed to get the Load Balancer IP)
+      - name: Authenticate to GCP
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_CD_SERVICE_ACCOUNT_KEY }}'
+
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: Install gke-gcloud-auth-plugin
+        run: gcloud components install gke-gcloud-auth-plugin
+
+      # 2. Connect to GKE
       - name: Get GKE Credentials
         run: |
           gcloud container clusters get-credentials ${{ env.GKE_CLUSTER_NAME }} --region ${{ env.GKE_REGION }}
       
+      # 3. Install wrk
       - name: Install wrk
         run: sudo apt-get update && sudo apt-get install -y wrk
 
+      # 4. Get the API's Public IP Address
       - name: Get API Public IP
         id: get_ip
         run: |
@@ -147,7 +146,8 @@ jobs:
             echo "Load Balancer IP not found."
             exit 1
           fi
-        # --- NEW STEP: Create the Lua script dynamically ---
+
+      # 5. Create the Lua script dynamically (Embeds the file directly in the runner)
       - name: Create wrk script
         run: |
           cat <<EOF > post_body.lua
@@ -156,7 +156,9 @@ jobs:
           wrk.method = "POST"
           EOF
 
+      # 6. Run the Stress Test
       - name: Run wrk stress test (1000 connections)
         run: |
-          # Run the test for 90 seconds to allow time for autoscaling
+          echo "Running stress test on http://${{ steps.get_ip.outputs.SERVICE_IP }}/predict"
+          # Run for 90 seconds to give the HPA time to react and scale up
           wrk -t4 -c1000 -d90s -s post_body.lua http://${{ steps.get_ip.outputs.SERVICE_IP }}/predict

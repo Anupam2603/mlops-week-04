@@ -1,18 +1,25 @@
+# This is the Horizontal Pod Autoscaler (HPA).
+# It acts as a thermostat to automatically scale your Pods.
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: iris-api-hpa
 spec:
+  # Target the deployment we created in Assignment 3
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: iris-api-deployment
-  minReplicas: 1
-  maxReplicas: 3      # assignment requires max_pods: 3
+  
+  # The constraints from the assignment:
+  minReplicas: 1  # "default pod availability of 1"
+  maxReplicas: 3  # "max_pods: 3"
+
+  # The Trigger: Scale up if CPU usage > 50%
   metrics:
   - type: Resource
     resource:
       name: cpu
       target:
         type: Utilization
-        averageUtilization: 60   # target ~60% CPU usage across pods
+        averageUtilization: 50
